@@ -2,7 +2,8 @@ import React, { useState } from "react";
 
 function App() {
   const [tapeInput, setTapeInput] = useState("1110001");
-  const [steps, setSteps] = useState([]);
+  const [allSteps, setAllSteps] = useState([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [error, setError] = useState("");
 
   const handleSimulate = async () => {
@@ -16,11 +17,24 @@ function App() {
       const data = await response.json();
 
       if (data.error) {
+        setAllSteps([]);
+        setCurrentStepIndex(0);
         setError(data.error);
-        setSteps([]);
       } else {
-        setSteps(data.steps);
+        setAllSteps(data.steps);
+        setCurrentStepIndex(0);
         setError("");
+
+        // Animate step-by-step
+        let index = 0;
+        const interval = setInterval(() => {
+          index++;
+          if (index >= data.steps.length) {
+            clearInterval(interval);
+          } else {
+            setCurrentStepIndex(index);
+          }
+        }, 500); // 500ms between steps (adjustable)
       }
     } catch (err) {
       setError("Could not connect to backend.");
@@ -42,25 +56,27 @@ function App() {
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <div style={{ marginTop: "1.5rem" }}>
-        {steps.map((step, index) => (
-          <div key={index} style={{ marginBottom: "8px" }}>
-            <strong>Step {index}:</strong>{" "}
-            {step.tape.split("").map((val, i) => (
+        {allSteps.length > 0 && (
+          <div>
+            <strong>Step {currentStepIndex}:</strong>{" "}
+            {allSteps[currentStepIndex].tape.split("").map((val, i) => (
               <span
                 key={i}
                 style={{
                   display: "inline-block",
                   width: "20px",
                   textAlign: "center",
-                  fontWeight: i === step.head ? "bold" : "normal",
-                  color: i === step.head ? "red" : "black",
+                  fontWeight:
+                    i === allSteps[currentStepIndex].head ? "bold" : "normal",
+                  color:
+                    i === allSteps[currentStepIndex].head ? "red" : "black",
                 }}
               >
                 {val}
               </span>
             ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
